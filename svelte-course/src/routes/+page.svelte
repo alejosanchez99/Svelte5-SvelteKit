@@ -1,6 +1,14 @@
 <script lang="ts">
 	import Button from '$lib/components/Button.svelte';
 	import { AlarmCheck, Search } from 'lucide-svelte';
+
+	let html = '<p>test</p>';
+	let button: Button;
+
+	$effect(() => {
+		button.getButton().focus();
+		// button.focus();
+	});
 </script>
 
 <!-- <h1>Outer</h1>
@@ -9,7 +17,25 @@
 <!-- <Counter /> -->
 
 <div class="wrapper">
-	<Button size="sm" bgColor="green" textColor="yellow">
+	{@html html}
+	<!-- <div
+		onclick={() => {
+			console.log('event coming from div');
+		}}
+	> -->
+	<Button
+		bind:this={button}
+		size="lg"
+		--buttonBgColor="yellow"
+		--buttonTextColor="green"
+		onlefthover={() => {
+			console.log('object');
+		}}
+		onclick={(e) => {
+			e.stopPropagation();
+			console.log('event from buttom');
+		}}
+	>
 		{#snippet left(isHovered: boolean)}
 			{#if isHovered}
 				<Search />
@@ -27,6 +53,8 @@
 	</Button>
 </div>
 
+<!-- </div> -->
+
 <style>
 	:global {
 		body {
@@ -34,8 +62,11 @@
 		}
 	}
 	.wrapper :global {
-		button {
+		/* button {
 			background-color: blue;
+		} */
+		p {
+			color: white;
 		}
 	}
 

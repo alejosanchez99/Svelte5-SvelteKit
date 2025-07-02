@@ -8,8 +8,7 @@
 		children: Snippet<[boolean]>;
 		size?: 'sm' | 'lg';
 		shadow?: boolean;
-		bgColor?: string;
-		textColor?: string;
+		onlefthover?: VoidFunction;
 	};
 	let {
 		left,
@@ -17,26 +16,36 @@
 		size = 'sm',
 		shadow = false,
 		children,
-		bgColor,
-		textColor,
+		onlefthover,
 		...props
 	}: Props = $props();
 
 	let isLeftHovered = $state(false);
+	let button: HTMLButtonElement;
+
+	export const focus = () => {
+		button.focus();
+	};
+
+	export const getButton = () => {
+		return button;
+	}
 </script>
 
 <!-- <button class={{ ['sm other-class']: size === 'sm', lg: size === 'lg', shadow }}> -->
 <button
+	bind:this={button}
 	class={[size === 'sm' && 'sm', size === 'lg' && 'lg', shadow && 'shadow']}
-	style:--buttonBgColor={bgColor}
-	style:--buttonTextColor={textColor}
 	{...props}
 >
 	{#if left}
 		<div
 			role="presentation"
 			class="left-content"
-			onmouseenter={() => (isLeftHovered = true)}
+			onmouseenter={() => {
+				onlefthover?.();
+				isLeftHovered = true;
+			}}
 			onmouseleave={() => (isLeftHovered = false)}
 		>
 			{@render left(isLeftHovered)}
@@ -85,9 +94,6 @@
 		}
 		.left-content {
 			margin-inline-end: 10px;
-			:global(svg) {
-				stroke: red;
-			}
 		}
 		.right-content {
 			margin-inline-start: 10px;
