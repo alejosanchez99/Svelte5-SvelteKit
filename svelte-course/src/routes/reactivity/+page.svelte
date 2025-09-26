@@ -1,45 +1,37 @@
 <script lang="ts">
-	const target = {
-		firstName: 'Ali',
-		lastName: 'Alaa',
-		occupations: [],
-		get fullName() {
-			return `${this.firstName} ${this.lastName}`;
-		},
-		set occupation(value: string) {
-			console.log(`Adding ${value} to occupations`);
-			this.occupations.push(value);
-		}
-	};
+	import Notification from '$lib/components/Notification.svelte';
+	import generateNotifications from '$lib/utils/generate-notifications';
 
-	target.firstName = 'Omar';
-	target.occupation = 'Web developer';
-
-	const handler = {
-		get(target, prop) {
-			console.log(target, prop);
-			return prop in target ? target[prop] : 'NA';
-		},
-		set(target, prop, value) {
-			if (['firstName', 'lastName'].includes(prop)) {
-				if (typeof value !== 'string') {
-					throw new TypeError(`Property ${prop} must be a string.`);
-				}
-			}
-			target[prop] = value;
-			return true;
-		}
-	};
-	const proxy = new Proxy(target, handler);
-	proxy.firstName = 'Omar';
-
-	console.log(proxy.firstName);
+	let notifications = $state(generateNotifications());
 </script>
+
+<ul>
+	{#each notifications as notification, index (notification.id)}
+		<li>
+			<Notification
+				{notification}
+				onremove={(id) => {
+					notifications.splice(index, 1);
+				}}
+			/>
+		</li>
+	{/each}
+</ul>
 
 <style>
 	:global {
 		body {
 			background-color: #222;
+			color: #fff;
+		}
+	}
+
+	ul {
+		list-style: none;
+		padding: 10px;
+		margin: 0;
+		li {
+			margin-bottom: 10px;
 		}
 	}
 </style>

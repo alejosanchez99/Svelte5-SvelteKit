@@ -32,6 +32,7 @@
 	}
 </script>
 
+
 <!-- <button class={{ ['sm other-class']: size === 'sm', lg: size === 'lg', shadow }}> -->
 <button
 	bind:this={button}
