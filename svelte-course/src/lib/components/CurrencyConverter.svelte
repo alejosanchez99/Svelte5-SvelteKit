@@ -1,120 +1,98 @@
 <script lang="ts">
-	import dummyRates from '$lib/utils/dummy-rates';
-
 	let baseValue: number | undefined = $state(1);
 	let baseCurrency = $state('usd');
-	let baseRates = $derived(dummyRates[baseCurrency]);
+	let baseRates: Record<string, number> = $state({});
 	let targetCurrency = $state('eur');
+	const currenciesPromise = fetch(
+		'https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@latest/v1/currencies.json'
+	).then((r) => r.json());
 
-	const calculateTarget = () => {
+	let targetValue = {
+		get value() {
+			return calculateTarget();
+		},
+		set value(v) {
+			baseValue = calculateBase(v);
+		}
+	};
+
+	async function fetchRates() {
+		const res = await fetch(
+			`https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@latest/v1/currencies/${baseCurrency}.json`
+		);
+		const resJSON = await res.json();
+		baseRates = resJSON[baseCurrency];
+	}
+
+	fetchRates();
+
+	// $effect(() => {
+	// 	fetchRates();
+	// });
+
+	function calculateTarget() {
 		return (
 			baseValue && baseRates[targetCurrency] && +(baseValue * baseRates[targetCurrency]).toFixed(3)
 		);
-	};
-
-	let targetValue: number | undefined = $state(calculateTarget());
-
-	const updateBaseValue = (value: number) => {
-		calculateBase;
-		baseValue = value;
-		targetValue = calculateTarget();
-	};
-
-	const calculateBase = () => {
+	}
+	function calculateBase(targetValue?: number) {
 		return (
 			targetValue &&
 			baseRates[targetCurrency] &&
 			+(targetValue / baseRates[targetCurrency]).toFixed(3)
 		);
-	};
-
-	const updateTargetValue = (value: number) => {
-		targetValue = value;
-		baseValue = calculateBase();
-	};
-
-	const updateBaseCurrency = (value: string) => {
-		baseCurrency = value;
-		targetValue = calculateTarget();
-	};
-
-	const updateTargetCurrency = (value: string) => {
-		targetCurrency = value;
-		targetValue = calculateTarget();
-	};
+	}
 </script>
 
-<div class="wrapper">
-	<div class="conversion">
-		<span class="base"
-			>{Number(1).toLocaleString('en-US', {
-				style: 'currency',
-				currency: baseCurrency,
-				currencyDisplay: 'name'
-			})} equals</span
-		>
-		<span class="target"
-			>{baseRates[targetCurrency].toLocaleString('en-US', {
-				style: 'currency',
-				currency: targetCurrency,
-				currencyDisplay: 'name'
-			})}</span
-		>
+{#await currenciesPromise}
+	<p>Loading...</p>
+{:then currencies}
+	<div class="wrapper">
+		<div class="conversion">
+			<span class="base"
+				>{Number(1).toLocaleString('en-US', {
+					style: 'currency',
+					currency: baseCurrency,
+					currencyDisplay: 'name'
+				})} equals</span
+			>
+			<span class="target"
+				>{baseRates[targetCurrency]?.toLocaleString('en-US', {
+					style: 'currency',
+					currency: targetCurrency,
+					currencyDisplay: 'name'
+				})}</span
+			>
+		</div>
+		<div class="base">
+			<input type="number" bind:value={baseValue} />
+			<select
+				bind:value={baseCurrency}
+				onchange={() => {
+					fetchRates();
+				}}
+			>
+				{#each Object.entries(currencies) as [key, value]}
+					<option value={key}>{value}</option>
+				{/each}
+			</select>
+		</div>
+		<div class="target">
+			<div class="target">
+				<input bind:value={targetValue.value} type="number" />
+				<select bind:value={targetCurrency}>
+					{#each Object.entries(currencies) as [key, value]}
+						<option value={key}>{value}</option>
+					{/each}
+				</select>
+			</div>
+		</div>
 	</div>
-	<div class="base">
-		<input
-			type="number"
-			value={baseValue}
-			oninput={(event) => {
-				updateBaseValue(event.currentTarget.valueAsNumber);
-			}}
-		/>
-		<select
-			value={baseCurrency}
-			oninput={(event) => {
-				updateBaseCurrency(event.currentTarget.value);
-			}}
-		>
-			<option value="usd">United States Dollar</option>
-			<option value="eur">Euro</option>
-			<option value="gbp">Pound Sterling</option>
-		</select>
-	</div>
-	<div class="target">
-		<input
-			type="number"
-			value={targetValue}
-			oninput={(event) => {
-				updateTargetValue(event.currentTarget.valueAsNumber);
-			}}
-		/>
-		<select
-			value={targetCurrency}
-			oninput={(event) => {
-				updateTargetCurrency(event.currentTarget.value);
-			}}
-		>
-			<option value="usd">United States Dollar</option>
-			<option value="eur">Euro</option>
-			<option value="gbp">Pound Sterling</option>
-		</select>
-	</div>
-</div>
+{:catch error}
+	<p>Something went wrong.</p>
+{/await}
 
-<style>
-	:global {
-		body {
-			background: #222;
-		}
-	}
-	.wrapper :global {
-		/* button {
-			background-color: blue;
-		} */
-		p {
-			color: white;
-		}
-	}
+<style lang="scss">
 	.wrapper {
 		font-family: Arial, Helvetica, sans-serif;
 		background-color: #131313;
@@ -123,8 +101,6 @@
 		border-radius: 10px;
 		.conversion {
 			margin-bottom: 20px;
-			color: white;
-
 			span.base {
 				opacity: 0.6;
 				font-size: 14px;
