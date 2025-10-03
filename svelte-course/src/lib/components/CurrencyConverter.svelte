@@ -1,13 +1,47 @@
 <script lang="ts">
 	import dummyRates from '$lib/utils/dummy-rates';
 
-	let baseValue = $state(1);
+	let baseValue: number | undefined = $state(1);
 	let baseCurrency = $state('usd');
 	let baseRates = $derived(dummyRates[baseCurrency]);
 	let targetCurrency = $state('eur');
-	let targetValue = $derived(
-		baseValue && baseRates[targetCurrency] && baseValue * baseRates[targetCurrency]
-	);
+
+	const calculateTarget = () => {
+		return (
+			baseValue && baseRates[targetCurrency] && +(baseValue * baseRates[targetCurrency]).toFixed(3)
+		);
+	};
+
+	let targetValue: number | undefined = $state(calculateTarget());
+
+	const updateBaseValue = (value: number) => {
+		calculateBase;
+		baseValue = value;
+		targetValue = calculateTarget();
+	};
+
+	const calculateBase = () => {
+		return (
+			targetValue &&
+			baseRates[targetCurrency] &&
+			+(targetValue / baseRates[targetCurrency]).toFixed(3)
+		);
+	};
+
+	const updateTargetValue = (value: number) => {
+		targetValue = value;
+		baseValue = calculateBase();
+	};
+
+	const updateBaseCurrency = (value: string) => {
+		baseCurrency = value;
+		targetValue = calculateTarget();
+	};
+
+	const updateTargetCurrency = (value: string) => {
+		targetCurrency = value;
+		targetValue = calculateTarget();
+	};
 </script>
 
 <div class="wrapper">
@@ -30,23 +64,36 @@
 	<div class="base">
 		<input
 			type="number"
-			bind:value={
-				() => baseValue,
-				(value) => {
-					baseValue = baseValue < 0 ? 1 : value;
-				}
-			}
+			value={baseValue}
+			oninput={(event) => {
+				updateBaseValue(event.currentTarget.valueAsNumber);
+			}}
 		/>
-
-		<select bind:value={baseCurrency}>
+		<select
+			value={baseCurrency}
+			oninput={(event) => {
+				updateBaseCurrency(event.currentTarget.value);
+			}}
+		>
 			<option value="usd">United States Dollar</option>
 			<option value="eur">Euro</option>
 			<option value="gbp">Pound Sterling</option>
 		</select>
 	</div>
 	<div class="target">
-		<input type="number" bind:value={targetValue} />
-		<select bind:value={targetCurrency}>
+		<input
+			type="number"
+			value={targetValue}
+			oninput={(event) => {
+				updateTargetValue(event.currentTarget.valueAsNumber);
+			}}
+		/>
+		<select
+			value={targetCurrency}
+			oninput={(event) => {
+				updateTargetCurrency(event.currentTarget.value);
+			}}
+		>
 			<option value="usd">United States Dollar</option>
 			<option value="eur">Euro</option>
 			<option value="gbp">Pound Sterling</option>
